@@ -4,8 +4,12 @@ import com.vulnview.dto.sbom.SBOMUploadResponse;
 import com.vulnview.entity.Component;
 import com.vulnview.entity.Project;
 import com.vulnview.entity.User;
+import com.vulnview.repository.BuildRepository;
 import com.vulnview.repository.ComponentRepository;
+import com.vulnview.repository.DependencyEdgeRepository;
+import com.vulnview.repository.PipelineRepository;
 import com.vulnview.repository.ProjectRepository;
+import com.vulnview.repository.SbomRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +37,18 @@ class SBOMProcessingServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private BuildRepository buildRepository;
+
+    @Mock
+    private PipelineRepository pipelineRepository;
+
+    @Mock
+    private SbomRepository sbomRepository;
+
+    @Mock
+    private DependencyEdgeRepository dependencyEdgeRepository;
 
     @InjectMocks
     private SBOMProcessingService sbomProcessingService;
@@ -75,11 +91,16 @@ class SBOMProcessingServiceTest {
         );
 
         when(userService.getCurrentUser()).thenReturn(testUser);
-        when(projectRepository.findByNameAndOwner(any(), any()))
+        when(projectRepository.findByNameAndOwnerId(any(), any()))
                 .thenReturn(Optional.empty());
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(componentRepository.findByNameAndGroupAndVersion(any(), any(), any()))
                 .thenReturn(Optional.empty());
+        when(pipelineRepository.findByNameAndProjectName(any(), any()))
+                .thenReturn(null);
+        when(pipelineRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(buildRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(sbomRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         // When
         SBOMUploadResponse response = sbomProcessingService.processSBOMFile(file, "test-project");
@@ -109,11 +130,16 @@ class SBOMProcessingServiceTest {
                 .build();
 
         when(userService.getCurrentUser()).thenReturn(testUser);
-        when(projectRepository.findByNameAndOwner(any(), any()))
+        when(projectRepository.findByNameAndOwnerId(any(), any()))
                 .thenReturn(Optional.of(existingProject));
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(componentRepository.findByNameAndGroupAndVersion(any(), any(), any()))
                 .thenReturn(Optional.empty());
+        when(pipelineRepository.findByNameAndProjectName(any(), any()))
+                .thenReturn(null);
+        when(pipelineRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(buildRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(sbomRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         // When
         SBOMUploadResponse response = sbomProcessingService.processSBOMFile(file, "test-project");
@@ -142,11 +168,16 @@ class SBOMProcessingServiceTest {
                 .build();
 
         when(userService.getCurrentUser()).thenReturn(testUser);
-        when(projectRepository.findByNameAndOwner(any(), any()))
+        when(projectRepository.findByNameAndOwnerId(any(), any()))
                 .thenReturn(Optional.empty());
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(componentRepository.findByNameAndGroupAndVersion(any(), any(), any()))
                 .thenReturn(Optional.of(existingComponent));
+        when(pipelineRepository.findByNameAndProjectName(any(), any()))
+                .thenReturn(null);
+        when(pipelineRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(buildRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(sbomRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         // When
         SBOMUploadResponse response = sbomProcessingService.processSBOMFile(file, "test-project");

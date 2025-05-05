@@ -35,8 +35,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(
-        summary = "Authenticate user",
-        description = "Authenticate a user with username and password"
+        summary = "Login user",
+        description = "Login user with username and password"
     )
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request

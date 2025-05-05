@@ -66,8 +66,9 @@ public class BuildServiceImpl implements BuildService {
                     Component component = new Component();
                     component.setName(componentDto.getName());
                     component.setVersion(componentDto.getVersion());
-                    component.setPackageUrl(componentDto.getPackageUrl());
-                    component.setLicense(componentDto.getLicense());
+                    component.setPackageUrl(componentDto.getPurl());
+                    component.setLicense(componentDto.getLicenses() != null && !componentDto.getLicenses().isEmpty() ? 
+                            componentDto.getLicenses().get(0) : null);
                     component.setProject(pipeline.getProject());
                     return component;
                 })

@@ -27,4 +27,6 @@ public interface ComponentRepository extends JpaRepository<Component, Long> {
     long countByRiskLevel(RiskLevel riskLevel);
 
     List<Component> findByProjectId(Long projectId);
+
+    Component findByPackageUrl(String packageUrl);
 } 

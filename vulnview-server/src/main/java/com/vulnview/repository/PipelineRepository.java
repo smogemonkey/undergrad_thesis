@@ -12,8 +12,7 @@ public interface PipelineRepository extends JpaRepository<Pipeline, Long> {
 
     @Query("SELECT p FROM Pipeline p " +
            "JOIN p.project pr " +
-           "JOIN pr.users u " +
-           "WHERE pr.name = :projectName AND u.id = :userId")
+           "WHERE pr.name = :projectName AND pr.owner.id = :userId")
     List<Pipeline> findAllByProjectNameAndUserId(@Param("projectName") String projectName, 
                                                @Param("userId") String userId);
 

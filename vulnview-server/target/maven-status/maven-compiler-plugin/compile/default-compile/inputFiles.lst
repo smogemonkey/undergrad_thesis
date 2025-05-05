@@ -1,6 +1,8 @@
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/analysis/AnalysisResponse.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/pipeline/CreatePipelineRequest.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/repository/DependencyEdgeRepository.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/controller/UserController.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/DependencyEdge.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/RiskLevel.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/ProjectUpdateRequest.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/build/ComponentResponse.java
@@ -10,15 +12,19 @@
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/Sbom.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/BuildDTO.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/Project.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/config/WebSocketConfig.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/repository/UserRepository.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/NotificationDto.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/sbom/component/ComponentDto.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/repository/PipelineRepository.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/PipelineDTO.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/vulnerability/ComponentReportDto.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/build/DependencyResponse.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/repository/AnalysisRepository.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/exception/NotFoundException.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/ComponentService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/Vulnerability.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/sbom/vulnerability/VulnerabilityDto.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/controller/AnalysisController.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/AuthenticationService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/auth/AuthResponse.java
@@ -56,6 +62,7 @@
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/PackageService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/config/SecurityConfig.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/SBOMProcessingService.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/config/WebConfig.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/build/CompareBuildResponse.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/analysis/AnalysisCreateRequest.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/model/Role.java
@@ -65,6 +72,7 @@
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/VulnerabilityService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/vulnerability/VulnerabilityUpdateRequest.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/SbomService.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/sbom/dependency/DependencyDto.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/ProjectService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/JwtService.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/impl/MavenPackageService.java
@@ -75,6 +83,7 @@
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/VulnViewApplication.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/controller/SBOMController.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/pipeline/DependencyResponse.java
+/home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/dto/sbom/metadata/MetadataDto.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/entity/NpmPackage.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/impl/ComponentServiceImpl.java
 /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/java/com/vulnview/service/PipelineService.java

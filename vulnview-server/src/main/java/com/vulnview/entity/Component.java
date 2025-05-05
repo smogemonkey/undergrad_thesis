@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,11 +41,17 @@ public class Component {
     @Column(length = 100)
     private String license;
 
+    @Column(length = 1000)
+    private String hash;
+
+    @Column(length = 1000)
+    private String evidence;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @OneToMany(mappedBy = "component", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(mappedBy = "components")
     @Builder.Default
     private Set<Vulnerability> vulnerabilities = new HashSet<>();
 
@@ -66,6 +73,9 @@ public class Component {
     @JoinColumn(name = "sbom_id")
     private Sbom sbom;
 
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
     public void setSbom(Sbom sbom) {
         if (this.sbom != null) {
             this.sbom.getComponents().remove(this);
@@ -76,17 +86,15 @@ public class Component {
         }
     }
 
-    @CreationTimestamp
-
     // Helper methods for managing bidirectional relationship
     public void addVulnerability(Vulnerability vulnerability) {
         vulnerabilities.add(vulnerability);
-        vulnerability.setComponent(this);
+        vulnerability.getComponents().add(this);
     }
 
     public void removeVulnerability(Vulnerability vulnerability) {
         vulnerabilities.remove(vulnerability);
-        vulnerability.setComponent(null);
+        vulnerability.getComponents().remove(this);
     }
 
     public void addDependency(Component dependency) {

@@ -11,4 +11,6 @@ public class ComponentResponse {
     private String packageUrl;
     private String license;
     private String riskLevel;
+    private String hash;
+    private String evidence;
 } 

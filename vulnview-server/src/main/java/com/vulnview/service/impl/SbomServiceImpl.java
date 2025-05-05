@@ -37,8 +37,8 @@ public class SbomServiceImpl implements SbomService {
 
         Build build = new Build();
         build.setPipeline(pipeline);
-        build.setRepository(sbomDto.getFormat());
-        build.setBranch(sbomDto.getVersion());
+        build.setRepository(sbomDto.getBomFormat());
+        build.setBranch(String.valueOf(sbomDto.getVersion()));
         build.setBuildNumber(1);
         build.setResult("SUCCESS");
         build.setDuration(0);
@@ -53,8 +53,9 @@ public class SbomServiceImpl implements SbomService {
                     Component component = new Component();
                     component.setName(componentDto.getName());
                     component.setVersion(componentDto.getVersion());
-                    component.setPackageUrl(componentDto.getPackageUrl());
-                    component.setLicense(componentDto.getLicense());
+                    component.setPackageUrl(componentDto.getPurl());
+                    component.setLicense(componentDto.getLicenses() != null && !componentDto.getLicenses().isEmpty() ? 
+                            componentDto.getLicenses().get(0) : null);
                     component.setProject(pipeline.getProject());
                     return component;
                 })

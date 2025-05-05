@@ -18,4 +18,6 @@ public class SBOMUploadResponse {
     private int vulnerableComponents;
     private List<String> processedFiles;
     private List<String> errors;
+    private String status;
+    private String message;
 } 

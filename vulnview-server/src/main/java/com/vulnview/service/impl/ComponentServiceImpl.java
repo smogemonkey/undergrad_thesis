@@ -32,6 +32,8 @@ public class ComponentServiceImpl implements ComponentService {
         existingComponent.setPackageUrl(component.getPackageUrl());
         existingComponent.setLicense(component.getLicense());
         existingComponent.setRiskLevel(component.getRiskLevel());
+        existingComponent.setHash(component.getHash());
+        existingComponent.setEvidence(component.getEvidence());
         
         return componentRepository.save(existingComponent);
     }
