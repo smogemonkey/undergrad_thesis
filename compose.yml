@@ -1,0 +1,41 @@
+services:
+  sbom-frontend:
+    image: vinh412/sbom-frontend
+    depends_on:
+      - sbom-api-server
+    environment:
+      - VITE_API_URL=http://localhost:8888
+      - VITE_WEBSOCKET_URL=ws://localhost:8888
+    ports:
+      - "80:3000"
+    restart: unless-stopped
+
+  sbom-api-server:
+    image: vinh412/sbom-api-server
+    environment:
+      - PORT=8888
+      - DB_PORT=5432
+      - DB_NAME=sbom
+      - DB_USERNAME=sbom
+      - DB_PASSWORD=sbom
+      # - JWT_SECRET_KEY=
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+
+  sbom-db:
+    image: postgres:16-alpine
+    restart: 'unless-stopped'
+    environment:
+      - POSTGRES_USER=sbom
+      - POSTGRES_PASSWORD=sbom
+    ports:
+      - '5431:5432'
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "sbom", "-U", "sbom"]
+      interval: '10s'
+      timeout: '30s'
+      retries: 5
+      start_period: '20s'
