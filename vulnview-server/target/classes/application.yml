@@ -1,32 +1,79 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/vulnview
-    username: ${DB_USERNAME:vulnview}
-    password: ${DB_PASSWORD:vulnview}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   flyway:
     enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+      enabled: true
+      file-size-threshold: 2KB
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 10
+        queue-capacity: 25
+      thread-name-prefix: VulnViewAsync-
+    scheduling:
+      pool:
+        size: 5
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:ndt300903@gmail.com}
+    password: ${MAIL_PASSWORD:owyn jybq vqbx loef}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: smtp.gmail.com
 
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /api/v1
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+    include-exception: true
 
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+
+github:
+  client:
+    id: ${GITHUB_CLIENT_ID:Ov23lihQSUqZz1ykMFIt}
+    secret: ${GITHUB_CLIENT_SECRET:7fa7691dfb32a55e33a5776f85bf46d362ef2936}
+  redirect:
+    uri: ${GITHUB_REDIRECT_URI:http://localhost:3000/auth/github/callback}
+  api:
+    url: ${GITHUB_API_URL:https://api.github.com}
+  token: ${GITHUB_TOKEN:dummy-token}
+  workspace:
+    path: ${GITHUB_WORKSPACE_PATH:/tmp/github-workspace}
 
 springdoc:
   api-docs:
@@ -37,16 +84,46 @@ springdoc:
 
 logging:
   level:
-    com.vulnview: TRACE
-    org.springframework.web: DEBUG
-    org.hibernate: DEBUG
-    org.flywaydb: DEBUG
+    root: INFO
+    com.vulnview: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+    com.vulnview.service.SnykScanService: DEBUG
+    com.vulnview.service.SnykResultProcessor: DEBUG
   file:
-    name: target/spring.log
+    name: logs/application.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
-ossindex:
-  username: ${OSSINDEX_USERNAME:test}
-  token: ${OSSINDEX_TOKEN:test} 
+vulnview:
+  nvd:
+    api:
+      base-url: ${NVD_API_BASE_URL:https://services.nvd.nist.gov/rest/json/cves/2.0}
+      rate-limit: ${NVD_RATE_LIMIT:50}  # 50 requests per minute with API key
+      api-key: ${NVD_API_KEY:b82b5523-b5f9-4744-835f-13f449086738}
+  epss:
+    base-url: ${EPSS_BASE_URL:https://epss.cyentia.com}
+  cisa-kev:
+    base-url: ${CISA_KEV_BASE_URL:https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json}
+  ai:
+    api:
+      url: ${AI_API_URL:https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent}
+      key: ${AI_API_KEY:AIzaSyCcuTw0lG8bxSVF2qtlgaMy3BfbOu4Z4eA}
+  logging:
+    scan:
+      file: logs/scan-operations.log
+      pattern: "%d{yyyy-MM-dd HH:mm:ss} [%X{scanId}] [%thread] %-5level %logger{36} - %msg%n"
+
+snyk:
+  token: ${SNYK_TOKEN:e756ffea-4869-4500-a4bc-422c8e63da61}
+  scripts:
+    path: /home/tomatofarmer/hoc/undergrad_thesis/vulnview-server/src/main/resources/scripts
+  scan:
+    timeout: 300000
+
+app:
+  vulnerability:
+    batch-size: ${VULNERABILITY_BATCH_SIZE:5}
+    batch-delay: ${VULNERABILITY_BATCH_DELAY:2000}
+    rate-limit: ${VULNERABILITY_RATE_LIMIT:1000}  # Set this via environment variable or leave empty for unauthenticated access 

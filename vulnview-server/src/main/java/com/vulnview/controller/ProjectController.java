@@ -1,79 +1,64 @@
 package com.vulnview.controller;
 
-import com.vulnview.dto.project.ProjectCreateRequest;
-import com.vulnview.dto.project.ProjectResponse;
-import com.vulnview.dto.project.ProjectUpdateRequest;
+import com.vulnview.entity.Project;
+import com.vulnview.service.AuthenticationService;
 import com.vulnview.service.ProjectService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import com.vulnview.dto.ProjectDTO;
 
 @RestController
 @RequestMapping("/api/v1/projects")
-@RequiredArgsConstructor
-@Tag(name = "Projects", description = "Project management APIs")
-@SecurityRequirement(name = "bearerAuth")
-public class ProjectController {
+public class ProjectController extends BaseController {
 
     private final ProjectService projectService;
 
+    public ProjectController(AuthenticationService authenticationService, ProjectService projectService) {
+        super(authenticationService);
+        this.projectService = projectService;
+    }
+
     @GetMapping
-    @Operation(summary = "Get all projects for current user")
-    public ResponseEntity<Page<ProjectResponse>> getAllProjects(
-            @ParameterObject @PageableDefault(size = 10) Pageable pageable
-    ) {
-        return ResponseEntity.ok(projectService.getAllProjects(pageable));
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<Project>> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get project by ID")
-    public ResponseEntity<ProjectResponse> getProject(
-            @Parameter(description = "Project ID") @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(projectService.getProjectById(id));
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<Project> getProject(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.getProject(id));
     }
 
     @PostMapping
-    @Operation(summary = "Create a new project")
-    public ResponseEntity<ProjectResponse> createProject(
-            @Valid @RequestBody ProjectCreateRequest request
-    ) {
-        return ResponseEntity.ok(projectService.createProject(request));
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody com.vulnview.dto.project.ProjectCreateRequest request) {
+        Project project = new Project();
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        // Set ownerId to current user
+        project.setOwnerId(getCurrentUserId());
+        Project saved = projectService.createProject(project);
+        return ResponseEntity.ok(ProjectDTO.from(saved));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update an existing project")
-    public ResponseEntity<ProjectResponse> updateProject(
-            @Parameter(description = "Project ID") @PathVariable Long id,
-            @Valid @RequestBody ProjectUpdateRequest request
-    ) {
-        return ResponseEntity.ok(projectService.updateProject(id, request));
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody com.vulnview.dto.project.ProjectUpdateRequest request) {
+        Project project = new Project();
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        return ResponseEntity.ok(projectService.updateProject(id, project));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a project")
-    public ResponseEntity<Void> deleteProject(
-            @Parameter(description = "Project ID") @PathVariable Long id
-    ) {
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/search")
-    @Operation(summary = "Search projects")
-    public ResponseEntity<Page<ProjectResponse>> searchProjects(
-            @Parameter(description = "Search query") @RequestParam String query,
-            @ParameterObject @PageableDefault(size = 10) Pageable pageable
-    ) {
-        return ResponseEntity.ok(projectService.searchProjects(query, pageable));
+        return ResponseEntity.ok().build();
     }
 } 

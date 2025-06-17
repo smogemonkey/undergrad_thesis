@@ -1,7 +1,7 @@
 package com.vulnview.dto.sbom;
 
+import com.vulnview.dto.DependencyDto;
 import com.vulnview.dto.sbom.component.ComponentDto;
-import com.vulnview.dto.sbom.dependency.DependencyDto;
 import com.vulnview.dto.sbom.metadata.MetadataDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +11,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -37,5 +39,12 @@ public class SbomDto {
     private List<ComponentDto> components;
 
     @Valid
-    private List<DependencyDto> dependencies;
+    private Set<DependencyDto> dependencies;
+
+    private Long id;
+    private String name;
+    private String format;
+    private String content;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 } 

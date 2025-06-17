@@ -1,0 +1,69 @@
+name: VulnView SBOM Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Generate SBOM
+        run: npx @cyclonedx/cdxgen -o bom.xml
+        
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-file
+          path: bom.xml
+          
+  analyze-sbom:
+    needs: generate-sbom
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download SBOM
+        uses: actions/download-artifact@v3
+        with:
+          name: sbom-file
+          
+      - name: Send SBOM to VulnView
+        uses: vulnview/upload-sbom@v1
+        with:
+          api-url: ${{ secrets.VULNVIEW_API_URL }}
+          api-key: ${{ secrets.VULNVIEW_API_KEY }}
+          sbom-file: bom.xml
+          
+      - name: Wait for Analysis
+        uses: vulnview/wait-for-analysis@v1
+        with:
+          api-url: ${{ secrets.VULNVIEW_API_URL }}
+          api-key: ${{ secrets.VULNVIEW_API_KEY }}
+          timeout: 300
+          
+      - name: Download Report
+        uses: vulnview/download-report@v1
+        with:
+          api-url: ${{ secrets.VULNVIEW_API_URL }}
+          api-key: ${{ secrets.VULNVIEW_API_KEY }}
+          format: pdf
+          
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: vulnerability-report
+          path: vulnerability-report.pdf 

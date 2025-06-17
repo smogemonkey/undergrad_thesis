@@ -1,12 +1,21 @@
 package com.vulnview.dto.pipeline;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreatePipelineRequest {
-    @NotBlank(message = "Pipeline name is required")
-    @Size(min = 1, max = 100, message = "Pipeline name must be between 1 and 100 characters")
+    @NotBlank
     private String name;
+    
+    private String description;
+    
+    @NotBlank
+    private String type;
 } 

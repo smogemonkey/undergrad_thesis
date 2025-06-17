@@ -1,11 +1,15 @@
 package com.vulnview.repository;
 
 import com.vulnview.entity.Component;
+import com.vulnview.entity.Project;
 import com.vulnview.entity.RiskLevel;
+import com.vulnview.entity.Sbom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,20 +17,33 @@ import java.util.Optional;
 
 @Repository
 public interface ComponentRepository extends JpaRepository<Component, Long> {
-    Optional<Component> findByNameAndGroupAndVersion(String name, String group, String version);
+    @Query("SELECT c FROM Component c WHERE c.packageUrl = :packageUrl ORDER BY c.id DESC")
+    Optional<Component> findByPackageUrl(String packageUrl);
+    Page<Component> findByProjectId(Long projectId, Pageable pageable);
+    List<Component> findBySbomId(Long sbomId);
     
-    Page<Component> findByRiskLevel(RiskLevel riskLevel, Pageable pageable);
+    @Query("SELECT c FROM Component c WHERE c.sbom.build.id = :buildId")
+    List<Component> findByBuildId(Long buildId);
     
-    @Query("SELECT c FROM Component c WHERE c.name LIKE %:search% OR c.group LIKE %:search%")
-    Page<Component> searchComponents(String search, Pageable pageable);
-    
-    @Query("SELECT c FROM Component c WHERE c.vulnerabilities IS NOT EMPTY")
-    List<Component> findVulnerableComponents();
-    
-    @Query("SELECT COUNT(c) FROM Component c WHERE c.riskLevel = :riskLevel")
-    long countByRiskLevel(RiskLevel riskLevel);
+    // Alias for findByPackageUrl to maintain backward compatibility
+    default Optional<Component> findByPurl(String purl) {
+        return findByPackageUrl(purl);
+    }
 
-    List<Component> findByProjectId(Long projectId);
+    List<Component> findByProject(Project project);
+    long countByProject(Project project);
+    long countVulnerableComponentsByProject(Project project);
+    List<Component> findVulnerableComponentsByProject(Project project);
 
-    Component findByPackageUrl(String packageUrl);
-} 
+    @Query("SELECT c FROM Component c WHERE c.name = :name AND c.version = :version AND c.sbom.id = :sbomId")
+    Optional<Component> findByNameAndVersionAndSbomId(@Param("name") String name, @Param("version") String version, @Param("sbomId") Long sbomId);
+
+    long countBySbomId(Long sbomId);
+    long countBySbomIdAndRiskLevelNot(Long sbomId, RiskLevel riskLevel);
+
+    Optional<Component> findByNameAndVersionAndRepositoryId(String name, String version, Long repositoryId);
+
+    @Modifying
+    @Query("DELETE FROM Component c WHERE c.sbom.repository.id = :repositoryId")
+    void deleteByRepositoryId(Long repositoryId);
+}

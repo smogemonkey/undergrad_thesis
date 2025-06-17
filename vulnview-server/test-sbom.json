@@ -1,0 +1,34 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-05-19T08:30:00Z",
+    "tools": [
+      {
+        "vendor": "Test Vendor",
+        "name": "Test Tool",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "test-project",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "test-library",
+      "version": "1.0.0",
+      "bom-ref": "test-library@1.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "test-library@1.0.0",
+      "dependsOn": []
+    }
+  ]
+} 

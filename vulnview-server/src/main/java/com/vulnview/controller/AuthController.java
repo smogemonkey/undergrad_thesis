@@ -1,46 +1,81 @@
 package com.vulnview.controller;
 
-import com.vulnview.dto.auth.AuthResponse;
-import com.vulnview.dto.auth.LoginRequest;
-import com.vulnview.dto.auth.RegisterRequest;
+import com.vulnview.dto.auth.LoginRequestDto;
+import com.vulnview.dto.auth.LoginResponseDto;
+import com.vulnview.dto.auth.RegisterRequestDto;
+import com.vulnview.dto.auth.RegisterResponseDto;
+import com.vulnview.entity.User;
 import com.vulnview.service.AuthenticationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import com.vulnview.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication management APIs")
-public class AuthController {
+public class AuthController extends BaseController {
 
-    private final AuthenticationService authenticationService;
+    private final UserService userService;
+
+    public AuthController(AuthenticationService authenticationService, UserService userService) {
+        super(authenticationService);
+        this.userService = userService;
+    }
 
     @PostMapping("/register")
-    @Operation(
-        summary = "Register a new user",
-        description = "Register a new user with username, email, and password"
-    )
-    public ResponseEntity<AuthResponse> register(
-            @Valid @RequestBody RegisterRequest request
-    ) {
+    public ResponseEntity<RegisterResponseDto> register(@RequestBody RegisterRequestDto request) {
         return ResponseEntity.ok(authenticationService.register(request));
     }
 
+    @PostMapping("/register/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RegisterResponseDto> registerAdmin(@RequestBody RegisterRequestDto request) {
+        return ResponseEntity.ok(authenticationService.registerAdmin(request));
+    }
+
     @PostMapping("/login")
-    @Operation(
-        summary = "Login user",
-        description = "Login user with username and password"
-    )
-    public ResponseEntity<AuthResponse> login(
-            @Valid @RequestBody LoginRequest request
-    ) {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authenticationService.login(request));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<User> getCurrentUser() {
+        return ResponseEntity.ok(userService.getCurrentUser());
+    }
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+        }
+        try {
+            authenticationService.sendOtp(email);
+            return ResponseEntity.ok(Map.of("message", "OTP sent"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to send OTP"));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String otp = body.get("otp");
+        if (email == null || email.isEmpty() || otp == null || otp.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and OTP are required"));
+        }
+        try {
+            boolean isValid = authenticationService.verifyOtp(email, otp);
+            if (isValid) {
+                return ResponseEntity.ok(Map.of("message", "OTP verified successfully"));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired OTP"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to verify OTP"));
+        }
     }
 } 

@@ -6,7 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -22,56 +24,72 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String name;
 
-    @Column(length = 500)
+    @Column(length = 1000)
     private String description;
 
-    @Column(length = 50)
-    private String version;
+    @Column(name = "group_name")
+    private String group;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private Set<Component> components = new HashSet<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Builder.Default
+    private Set<Analysis> analyses = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Builder.Default
+    private Set<Pipeline> pipelines = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Builder.Default
+    private Set<Build> builds = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private Set<Vulnerability> vulnerabilities = new HashSet<>();
 
-    @Column(name = "total_components")
-    @Builder.Default
-    private Integer totalComponents = 0;
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Set<Membership> memberships = new HashSet<>();
 
-    @Column(name = "critical_risks")
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
-    private Integer criticalRisks = 0;
+    private Set<Repository> repositories = new HashSet<>();
 
-    @Column(name = "high_risks")
-    @Builder.Default
-    private Integer highRisks = 0;
-
-    @Column(name = "medium_risks")
-    @Builder.Default
-    private Integer mediumRisks = 0;
-
-    @Column(name = "low_risks")
-    @Builder.Default
-    private Integer lowRisks = 0;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Helper methods for managing bidirectional relationship
+    @Column(name = "last_build_at")
+    private LocalDateTime lastBuildAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     public void addComponent(Component component) {
         components.add(component);
         component.setProject(this);
@@ -82,13 +100,47 @@ public class Project {
         component.setProject(null);
     }
 
-    public void addVulnerability(Vulnerability vulnerability) {
-        vulnerabilities.add(vulnerability);
-        vulnerability.setProject(this);
+    public void addAnalysis(Analysis analysis) {
+        analyses.add(analysis);
+        analysis.setProject(this);
     }
 
-    public void removeVulnerability(Vulnerability vulnerability) {
-        vulnerabilities.remove(vulnerability);
-        vulnerability.setProject(null);
+    public void removeAnalysis(Analysis analysis) {
+        analyses.remove(analysis);
+        analysis.setProject(null);
+    }
+
+    public void addPipeline(Pipeline pipeline) {
+        pipelines.add(pipeline);
+        pipeline.setProject(this);
+    }
+
+    public void removePipeline(Pipeline pipeline) {
+        pipelines.remove(pipeline);
+        pipeline.setProject(null);
+    }
+
+    public void addBuild(Build build) {
+        builds.add(build);
+        build.setProject(this);
+    }
+
+    public void removeBuild(Build build) {
+        builds.remove(build);
+        build.setProject(null);
+    }
+
+    public void addRepository(Repository repository) {
+        repositories.add(repository);
+        repository.setProject(this);
+    }
+
+    public void removeRepository(Repository repository) {
+        repositories.remove(repository);
+        repository.setProject(null);
+    }
+
+    public void setUser(User user) {
+        this.ownerId = user.getId();
     }
 } 

@@ -1,0 +1,1 @@
+ALTER TABLE repositories ADD COLUMN IF NOT EXISTS local_path VARCHAR(255); 

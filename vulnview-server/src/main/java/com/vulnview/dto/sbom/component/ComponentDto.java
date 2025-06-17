@@ -1,7 +1,9 @@
 package com.vulnview.dto.sbom.component;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.vulnview.dto.sbom.dependency.DependencyDto;
 import com.vulnview.dto.sbom.vulnerability.VulnerabilityDto;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,28 +16,26 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ComponentDto {
-    @NotBlank(message = "Type is required")
-    private String type;
-
-    @NotBlank(message = "Name is required")
-    private String name;
-
     private String group;
-
-    @NotBlank(message = "Version is required")
+    private String name;
     private String version;
-
-    private String description;
     private String scope;
-    private Map<String, String> hashes;
-    private List<String> licenses;
+    private List<HashDto> hashes;
     private String purl;
-    private List<String> externalReferences;
+    private String type;
+    private String publisher;
+    
+    @JsonProperty(value = "bom-ref")
     private String bomRef;
-    private Map<String, Object> evidence;
-    private Map<String, String> properties;
+    
+    private List<PropertyDto> properties;
+    private EvidenceDto evidence;
+    
+    // Add vulnerabilities for direct access in extract endpoint
     private List<VulnerabilityDto> vulnerabilities;
-    private String hash;
-    private String evidenceString;
+    
+    private String description;
+    private List<DependencyDto> dependencies;
 } 

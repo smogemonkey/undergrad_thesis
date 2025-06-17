@@ -4,13 +4,14 @@ import com.vulnview.dto.analysis.AnalysisCreateRequest;
 import com.vulnview.dto.analysis.AnalysisResponse;
 import com.vulnview.dto.analysis.ReportResponse;
 import com.vulnview.entity.Analysis;
+import com.vulnview.entity.Build;
 import com.vulnview.entity.Project;
-import com.vulnview.entity.Vulnerability;
 import com.vulnview.entity.RiskLevel;
+import com.vulnview.exception.NotFoundException;
 import com.vulnview.repository.AnalysisRepository;
+import com.vulnview.repository.BuildRepository;
 import com.vulnview.repository.ProjectRepository;
 import com.vulnview.service.AnalysisService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,19 +27,25 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     private final AnalysisRepository analysisRepository;
     private final ProjectRepository projectRepository;
+    private final BuildRepository buildRepository;
 
     @Override
     @Transactional
     public AnalysisResponse createAnalysis(AnalysisCreateRequest request) {
         Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+        
+        Build build = buildRepository.findById(request.getBuildId())
+                .orElseThrow(() -> new NotFoundException("Build not found"));
 
         Analysis analysis = Analysis.builder()
                 .project(project)
+                .build(build)
                 .name(request.getName())
                 .description(request.getDescription())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .analysisType(request.getAnalysisType())
+                .status("PENDING")
+                .startTime(LocalDateTime.now())
                 .build();
 
         analysis = analysisRepository.save(analysis);
@@ -49,7 +56,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional(readOnly = true)
     public AnalysisResponse getAnalysis(Long id) {
         Analysis analysis = analysisRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Analysis not found"));
+                .orElseThrow(() -> new NotFoundException("Analysis not found"));
         return mapToResponse(analysis);
     }
 
@@ -73,7 +80,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional
     public void deleteAnalysis(Long id) {
         if (!analysisRepository.existsById(id)) {
-            throw new EntityNotFoundException("Analysis not found");
+            throw new NotFoundException("Analysis not found");
         }
         analysisRepository.deleteById(id);
     }
@@ -82,29 +89,37 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional(readOnly = true)
     public ReportResponse generateReport(Long analysisId) {
         Analysis analysis = analysisRepository.findById(analysisId)
-                .orElseThrow(() -> new EntityNotFoundException("Analysis not found"));
+                .orElseThrow(() -> new NotFoundException("Analysis not found"));
 
-        Map<RiskLevel, Integer> vulnerabilityCountByRisk = analysis.getProject().getVulnerabilities().stream()
-                .collect(Collectors.groupingBy(Vulnerability::getRiskLevel, Collectors.summingInt(e -> 1)));
+        Map<RiskLevel, Integer> vulnerabilityCountByRisk = analysis.getVulnerabilities().stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getSeverity() != null ? RiskLevel.valueOf(v.getSeverity().toUpperCase()) : RiskLevel.NONE,
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
 
-        Map<String, Integer> vulnerabilityCountByComponent = analysis.getProject().getVulnerabilities().stream()
-                .flatMap(v -> v.getAffectedComponents().stream())
-                .collect(Collectors.groupingBy(String::toString, Collectors.summingInt(e -> 1)));
+        Map<String, Integer> vulnerabilityCountByComponent = analysis.getVulnerabilities().stream()
+                .flatMap(v -> v.getComponentVulnerabilities().stream())
+                .collect(Collectors.groupingBy(
+                        cv -> cv.getComponent().getName(),
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
 
-        Map<String, Integer> vulnerabilityCountByCve = analysis.getProject().getVulnerabilities().stream()
-                .collect(Collectors.groupingBy(Vulnerability::getCveId, Collectors.summingInt(e -> 1)));
+        Map<String, Integer> vulnerabilityCountByCve = analysis.getVulnerabilities().stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getCveId(),
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
 
         return ReportResponse.builder()
-                .id(analysis.getId())
-                .analysisId(analysisId)
-                .title("Vulnerability Analysis Report - " + analysis.getName())
-                .summary("Analysis of vulnerabilities in project: " + analysis.getProject().getName())
+                .analysisId(analysis.getId())
+                .analysisName(analysis.getName())
+                .projectName(analysis.getProject().getName())
+                .buildNumber(analysis.getBuild().getBuildNumber().toString())
                 .vulnerabilityCountByRisk(vulnerabilityCountByRisk)
                 .vulnerabilityCountByComponent(vulnerabilityCountByComponent)
                 .vulnerabilityCountByCve(vulnerabilityCountByCve)
+                .summary(generateSummary(vulnerabilityCountByRisk))
                 .recommendations(generateRecommendations(vulnerabilityCountByRisk))
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
@@ -112,36 +127,47 @@ public class AnalysisServiceImpl implements AnalysisService {
         return AnalysisResponse.builder()
                 .id(analysis.getId())
                 .projectId(analysis.getProject().getId())
+                .buildId(analysis.getBuild().getId())
                 .name(analysis.getName())
                 .description(analysis.getDescription())
-                .vulnerabilityCountByRisk(analysis.getProject().getVulnerabilities().stream()
-                        .collect(Collectors.groupingBy(Vulnerability::getRiskLevel, Collectors.summingInt(e -> 1))))
-                .vulnerabilityCountByComponent(analysis.getProject().getVulnerabilities().stream()
-                        .flatMap(v -> v.getAffectedComponents().stream())
-                        .collect(Collectors.groupingBy(String::toString, Collectors.summingInt(e -> 1))))
-                .vulnerabilityCountByCve(analysis.getProject().getVulnerabilities().stream()
-                        .collect(Collectors.groupingBy(Vulnerability::getCveId, Collectors.summingInt(e -> 1))))
+                .analysisType(analysis.getAnalysisType())
+                .status(analysis.getStatus())
+                .startTime(analysis.getStartTime())
+                .endTime(analysis.getEndTime())
+                .duration(analysis.getDuration())
                 .createdAt(analysis.getCreatedAt())
                 .updatedAt(analysis.getUpdatedAt())
                 .build();
     }
 
+    private String generateSummary(Map<RiskLevel, Integer> vulnerabilityCountByRisk) {
+        StringBuilder summary = new StringBuilder();
+        summary.append("Analysis Summary:\n");
+        summary.append("Total vulnerabilities: ").append(vulnerabilityCountByRisk.values().stream().mapToInt(Integer::intValue).sum()).append("\n");
+        summary.append("By risk level:\n");
+        vulnerabilityCountByRisk.forEach((risk, count) -> 
+            summary.append("- ").append(risk).append(": ").append(count).append("\n")
+        );
+        return summary.toString();
+    }
+
     private String generateRecommendations(Map<RiskLevel, Integer> vulnerabilityCountByRisk) {
         StringBuilder recommendations = new StringBuilder();
+        recommendations.append("Recommendations:\n");
         
         if (vulnerabilityCountByRisk.getOrDefault(RiskLevel.CRITICAL, 0) > 0) {
-            recommendations.append("Critical vulnerabilities detected. Immediate action required.\n");
+            recommendations.append("- Address critical vulnerabilities immediately\n");
         }
         if (vulnerabilityCountByRisk.getOrDefault(RiskLevel.HIGH, 0) > 0) {
-            recommendations.append("High-risk vulnerabilities present. Address these as soon as possible.\n");
+            recommendations.append("- Prioritize fixing high-risk vulnerabilities\n");
         }
         if (vulnerabilityCountByRisk.getOrDefault(RiskLevel.MEDIUM, 0) > 0) {
-            recommendations.append("Medium-risk vulnerabilities found. Plan to address these in upcoming sprints.\n");
+            recommendations.append("- Plan to address medium-risk vulnerabilities\n");
         }
         if (vulnerabilityCountByRisk.getOrDefault(RiskLevel.LOW, 0) > 0) {
-            recommendations.append("Low-risk vulnerabilities identified. Consider addressing these in future updates.\n");
+            recommendations.append("- Consider addressing low-risk vulnerabilities in future updates\n");
         }
-
+        
         return recommendations.toString();
     }
 } 

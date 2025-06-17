@@ -1,24 +1,20 @@
 package com.vulnview.dto.build;
 
+import com.vulnview.dto.BuildDTO;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.List;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CompareBuildResponse {
-    private List<ComponentDiff> addedComponents;
-    private List<ComponentDiff> removedComponents;
-    private List<ComponentDiff> updatedComponents;
-
-    @Data
-    @Builder
-    public static class ComponentDiff {
-        private String name;
-        private String version;
-        private String packageUrl;
-        private String license;
-        private String riskLevel;
-    }
+    private BuildDTO build1;
+    private BuildDTO build2;
+    private int addedComponents;
+    private int removedComponents;
+    private int updatedComponents;
+    private int vulnerabilityChange;
 } 

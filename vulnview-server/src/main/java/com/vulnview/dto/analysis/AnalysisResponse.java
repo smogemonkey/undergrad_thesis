@@ -1,22 +1,27 @@
 package com.vulnview.dto.analysis;
 
-import com.vulnview.entity.RiskLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AnalysisResponse {
     private Long id;
+    private Long projectId;
+    private Long buildId;
     private String name;
     private String description;
-    private Long projectId;
-    private String projectName;
-    private Map<RiskLevel, Integer> vulnerabilityCountByRisk;
-    private Map<String, Integer> vulnerabilityCountByComponent;
-    private Map<String, Integer> vulnerabilityCountByCve;
+    private String analysisType;
+    private String status;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long duration;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 } 

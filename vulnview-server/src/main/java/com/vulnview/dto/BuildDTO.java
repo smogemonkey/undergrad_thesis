@@ -1,23 +1,30 @@
 package com.vulnview.dto;
 
 import com.vulnview.entity.Build;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BuildDTO {
     private Long id;
+    private Long projectId;
+    private Long pipelineId;
     private String repository;
     private String branch;
-    private int buildNumber;
+    private Integer buildNumber;
     private String result;
-    private long duration;
+    private Long duration;
     private LocalDateTime startAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String sbomId;
 
     public static BuildDTO from(Build build) {
         return BuildDTO.builder()

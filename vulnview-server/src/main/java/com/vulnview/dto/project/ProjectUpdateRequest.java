@@ -1,6 +1,6 @@
 package com.vulnview.dto.project;
 
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectUpdateRequest {
-    @Size(min = 3, max = 100, message = "Project name must be between 3 and 100 characters")
+    @NotBlank(message = "Project name is required")
     private String name;
 
-    @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 
-    @Size(max = 50, message = "Version cannot exceed 50 characters")
+    @NotBlank(message = "Project version is required")
     private String version;
 } 

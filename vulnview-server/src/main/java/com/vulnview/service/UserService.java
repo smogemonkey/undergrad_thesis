@@ -1,46 +1,27 @@
 package com.vulnview.service;
 
 import com.vulnview.entity.User;
-import com.vulnview.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
+import com.vulnview.dto.GithubSyncRequest;
+import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
-public class UserService {
+public interface UserService {
+    User getCurrentUser();
+    User getUserById(Long id);
+    void deleteUser(Long id);
+    User updateEmail(String newEmail);
+    List<User> getAllUsers();
 
-    private final UserRepository userRepository;
+    /**
+     * Create or update a user from GitHub authentication
+     */
+    User createOrUpdateUserFromGitHub(String githubUsername, String email, String githubToken);
 
-    public User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("User not found"));
-    }
-
-    @Transactional(readOnly = true)
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    }
-
-    @Transactional
-    public void deleteUser(Long id) {
-        User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(id)) {
-            throw new IllegalArgumentException("You can only delete your own account");
-        }
-        userRepository.deleteById(id);
-    }
+    /**
+     * Generate JWT token for a user
+     */
+    String generateToken(User user);
 
     @Transactional
-    public User updateEmail(String newEmail) {
-        User user = getCurrentUser();
-        if (userRepository.existsByEmail(newEmail) && !user.getEmail().equals(newEmail)) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        user.setEmail(newEmail);
-        return userRepository.save(user);
-    }
+    User syncGithub(String code);
 } 

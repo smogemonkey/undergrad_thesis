@@ -1,0 +1,14 @@
+package com.vulnview.entity;
+
+public enum BuildStatus {
+    PENDING,
+    PARSING_SBOM,
+    PARSING_FAILED,
+    ENRICHMENT_QUEUED,
+    ENRICHING_VULNERABILITIES,
+    SUCCESS_ENRICHED,
+    FAILED_ENRICHMENT,
+    COMPLETED,
+    FAILED,
+    VULNERABILITY_SCANNING
+} 

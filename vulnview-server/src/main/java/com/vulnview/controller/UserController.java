@@ -1,5 +1,6 @@
 package com.vulnview.controller;
 
+import com.vulnview.dto.GithubSyncRequest;
 import com.vulnview.entity.User;
 import com.vulnview.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,5 +47,11 @@ public class UserController {
             @RequestParam @Email String newEmail
     ) {
         return ResponseEntity.ok(userService.updateEmail(newEmail));
+    }
+
+    @PostMapping("/sync-github")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<User> syncGithub(@RequestBody GithubSyncRequest request) {
+        return ResponseEntity.ok(userService.syncGithub(request.getCode()));
     }
 } 
